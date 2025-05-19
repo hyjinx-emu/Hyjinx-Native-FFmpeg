@@ -1,0 +1,50 @@
+name: FFmpeg native build
+on:
+  workflow_dispatch:
+    inputs:
+      rev:
+        description: 'FFmpeg/FFmpeg commit to build'
+        required: true
+
+jobs:
+  build:
+    name: ${{ matrix.platform.name }}
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+        - { name: win-x64,     os: ubuntu-20.04,   arch: x86_64, target_os: win   }
+        - { name: linux-x64,   os: ubuntu-20.04,   arch: x86_64, target_os: linux }
+        - { name: linux-arm64, os: ubuntu-20.04,   arch: arm64,  target_os: linux }
+        - { name: osx-x64,     os: macos-latest,   arch: x86_64, target_os: macos }
+        - { name: osx-arm64,   os: macos-latest,   arch: arm64,  target_os: macos }
+    steps:
+      - name: Setup qemu static
+        uses: docker/setup-qemu-action@v3
+        if: runner.os == 'Linux'
+      - uses: actions/checkout@v4
+        with:
+          repository: FFmpeg/FFmpeg
+          ref: ${{ github.event.inputs.rev }} 
+      - uses: actions/checkout@v4
+        with:
+          path: 'nvdec_deps'
+      - name: Build and prepare release
+        run: nvdec_deps/ci/run.sh $PWD $PWD/nvdec_deps/native/${{ matrix.platform.name }} ${{ matrix.platform.arch }} ${{ matrix.platform.target_os }}
+        shell: bash
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.platform.name }}-binaries
+          path: install_output
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          commit-message: Update ${{ matrix.platform.name }} binaries
+          title: Update ${{ matrix.platform.name }} binaries
+          body: This PR has been auto-generated to update the ${{ matrix.platform.name }} binaries.
+          branch: update-${{ matrix.platform.name }}-binaries
+          path: 'nvdec_deps'
+        env:
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
