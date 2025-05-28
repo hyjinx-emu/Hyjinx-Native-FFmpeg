@@ -106,6 +106,8 @@ jobs:
             --disable-avfilter \
             --disable-debug \
             --disable-lto \
+            --enable-asm \
+            --enable-nasm \
             --enable-avcodec \
             --enable-shared \
             --enable-decoder="${{ env.DECODERS }}" \
@@ -131,7 +133,7 @@ jobs:
 
       - name: Build FFmpeg
         shell: bash
-        run: make -j$(nproc)
+        run: make -j$(nproc) V=1
 
       - name: Install FFmpeg
         shell: bash
