@@ -53,8 +53,8 @@ jobs:
         run: |
           echo "GCC ==========================="
           which gcc
-          gcc -v
-          gcc -m64
+          gcc -v || true
+          gcc -m64 || true
           echo "NASM =========================="
           which nasm
           nasm -v
