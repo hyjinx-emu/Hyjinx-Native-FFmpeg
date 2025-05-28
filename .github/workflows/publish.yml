@@ -71,7 +71,7 @@ jobs:
           which clang
           clang --version
           echo "UNAME ========================="
-          uname --arch
+          uname -a
           echo "MAKE =========================="
           which make
           make --version
