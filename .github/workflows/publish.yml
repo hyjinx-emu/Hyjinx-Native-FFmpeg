@@ -13,6 +13,7 @@ permissions:
 
 env:
   FFMPEG_VERSION: 5.1.1 # This needs to be updated to match the FFmpeg version being compiled.
+  DECODERS: "h264,vp8"
 
 jobs:
   build-ffmpeg:
@@ -22,7 +23,7 @@ jobs:
     strategy:
       matrix:
         platform:
-          - { name: win-x64,   runner: ubuntu-latest, arch: x86_64, target-os: windows, cross-prefix: x86_64-w64-mingw32- }
+          # - { name: win-x64,   runner: ubuntu-latest, arch: x86_64, target-os: mingw32, cross-prefix: x86_64-w64-mingw32- }
           - { name: linux-x64, runner: ubuntu-latest, arch: x86_64, target-os: linux }
       fail-fast: false
       
@@ -38,43 +39,57 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            autoconf automake build-essential cmake git libtool \
-            nasm pkg-config yasm zlib1g-dev libx264-dev
+            yasm build-essential clang llvm make automake \
+            autoconf pkg-config libtool-bin nasm
 
-      - name: Install dependencies (Windows cross-compile)
-        if: matrix.platform.name == 'win-x64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev
+      # - name: Install dependencies (Windows)
+      #   if: matrix.platform.name == 'win-x64'
+      #   run: |
+      #     sudo apt-get update
+      #     sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev
 
-      - name: Configure FFmpeg
-        if: matrix.platform.cross-prefix == ''
+      - name: Configure FFmpeg for Linux
+        if: matrix.platform.name == 'linux-x64'
+        env:
+          LDFLAGS: "-static-libgcc -static-libstdc++ -static"
         run: |
-          ./configure --prefix=$GITHUB_WORKSPACE/out \
+          ./configure \
             --arch=${{ matrix.platform.arch }} \
             --target-os=${{ matrix.platform.target-os }} \
-            --disable-debug \
-            --enable-static \
-            --disable-shared \
+            --disable-everything \
+            --disable-static \
             --disable-doc \
-            --disable-ffplay \
-            --enable-gpl \
-            --enable-libx264
+            --disable-programs \
+            --disable-swscale \
+            --disable-avformat \
+            --disable-swresample \
+            --disable-avdevice \
+            --disable-avfilter \
+            --disable-debug \
+            --enable-avcodec \
+            --enable-shared \
+            --enable-decoder="${{ env.DECODERS }}" \
+            --enable-lto \
+            --enable-stripping \
+            --enable-cross-compile \
+            --prefix=$GITHUB_WORKSPACE/out
 
-      - name: Configure FFmpeg (Cross compilation)
-        if: matrix.platform.cross-prefix != ''
-        run: |
-          ./configure --prefix=$GITHUB_WORKSPACE/out \
-            --arch=${{ matrix.platform.arch }} \
-            --target-os=${{ matrix.platform.target-os }} \
-            --cross-prefix=${{ matrix.platform.cross-prefix }} \
-            --disable-debug \
-            --enable-static \
-            --disable-shared \
-            --disable-doc \
-            --disable-ffplay \
-            --enable-gpl \
-            --enable-libx264      
+      # - name: Configure FFmpeg for Windows
+      #   if: matrix.platform.name == 'win-x64'
+      #   run: |
+      #     ./configure \
+      #       --arch=${{ matrix.platform.arch }} \
+      #       --target-os=${{ matrix.platform.target-os }} \
+      #       --cross-prefix=${{ matrix.platform.cross-prefix }} \
+      #       --enable-cross-compile \
+      #       --disable-debug \
+      #       --enable-static \
+      #       --disable-shared \
+      #       --disable-doc \
+      #       --disable-ffplay \
+      #       --enable-gpl \
+      #       --enable-libx264 \
+      #       --prefix=$GITHUB_WORKSPACE/out \
 
       - name: Build FFmpeg
         shell: bash
