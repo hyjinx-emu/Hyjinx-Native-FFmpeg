@@ -66,10 +66,10 @@ jobs:
             --disable-avdevice \
             --disable-avfilter \
             --disable-debug \
+            --disable-lto \
             --enable-avcodec \
             --enable-shared \
             --enable-decoder="${{ env.DECODERS }}" \
-            --enable-lto \
             --enable-stripping \
             --enable-cross-compile \
             --prefix=$GITHUB_WORKSPACE/out
