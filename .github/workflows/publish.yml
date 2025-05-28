@@ -52,8 +52,30 @@ jobs:
         shell: bash
         run: |
           which gcc
+          gcc -v
+          gcc -m64
           which nasm
+          nasm -v
           which yasm
+          yasm --version
+          which ld
+          ld --version
+          which as
+          as --version
+          which clang
+          clang --version
+          uname --arch
+          which make
+          make --version
+          which pkg-config
+          pkg-config --version
+
+      - name: Echo environment variables
+        shell: bash
+        run: |
+          echo $CFLAGS
+          echo $CPPFLAGS
+          echo $LDFLAGS
 
       - name: Configure FFmpeg for Linux
         if: matrix.platform.name == 'linux-x64'
