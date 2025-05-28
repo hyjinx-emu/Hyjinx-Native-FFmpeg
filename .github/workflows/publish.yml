@@ -23,8 +23,8 @@ jobs:
     strategy:
       matrix:
         platform:
-          # - { name: win-x64,   runner: ubuntu-latest, arch: x86_64, target-os: mingw32, cross-prefix: x86_64-w64-mingw32- }
-          - { name: linux-x64, runner: ubuntu-latest, arch: x86_64, target-os: linux }
+          - { name: win-x64,   runner: ubuntu-latest, arch: x86_64, target-os: mingw32, cross-prefix: x86_64-w64-mingw32- }
+          # - { name: linux-x64, runner: ubuntu-latest, arch: x86_64, target-os: linux }
       fail-fast: false
       
     steps:
@@ -42,11 +42,12 @@ jobs:
             yasm build-essential clang llvm make automake \
             autoconf pkg-config libtool-bin nasm
 
-      # - name: Install dependencies (Windows)
-      #   if: matrix.platform.name == 'win-x64'
-      #   run: |
-      #     sudo apt-get update
-      #     sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev
+      - name: Install dependencies (Windows)
+        if: matrix.platform.name == 'win-x64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev \
+            make automake autoconf libtool
 
       - name: Export versions
         shell: bash
@@ -86,32 +87,50 @@ jobs:
           echo $CPPFLAGS
           echo $LDFLAGS
 
-      - name: Configure FFmpeg for Linux
-        if: matrix.platform.name == 'linux-x64'
-        env:
-          LDFLAGS: "-static-libgcc -static-libstdc++"
-        run: 
+      - name: Configure FFmpeg for Windows
+        run: |
           ./configure \
-            --arch=${{ matrix.platform.arch }} \
-            --disable-everything \
+            --prefix="$GITHUB_WORKSPACE/out" \
+            --target-os=mingw32 \
+            --arch=x86_64 \
+            --cross-prefix=x86_64-w64-mingw32- \
+            --enable-cross-compile \
             --disable-static \
+            --enable-shared \
+            --disable-debug \
             --disable-doc \
             --disable-programs \
-            --disable-swscale \
-            --disable-avformat \
-            --disable-swresample \
-            --disable-avdevice \
-            --disable-avfilter \
-            --disable-debug \
-            --enable-lto \
-            --enable-asm \
-            --enable-nasm \
             --enable-avcodec \
-            --enable-shared \
-            --enable-decoder="${{ env.DECODERS }}" \
-            --enable-stripping \
-            --enable-cross-compile \
-            --prefix=$GITHUB_WORKSPACE/out
+            --enable-decoder=h264,vp8 \
+            --disable-everything \
+            --enable-stripping
+
+      # - name: Configure FFmpeg for Linux
+      #   if: matrix.platform.name == 'linux-x64'
+      #   env:
+      #     LDFLAGS: "-static-libgcc -static-libstdc++"
+      #   run: 
+      #     ./configure \
+      #       --arch=${{ matrix.platform.arch }} \
+      #       --disable-everything \
+      #       --disable-static \
+      #       --disable-doc \
+      #       --disable-programs \
+      #       --disable-swscale \
+      #       --disable-avformat \
+      #       --disable-swresample \
+      #       --disable-avdevice \
+      #       --disable-avfilter \
+      #       --disable-debug \
+      #       --enable-lto \
+      #       --enable-asm \
+      #       --enable-nasm \
+      #       --enable-avcodec \
+      #       --enable-shared \
+      #       --enable-decoder="${{ env.DECODERS }}" \
+      #       --enable-stripping \
+      #       --enable-cross-compile \
+      #       --prefix=$GITHUB_WORKSPACE/out
 
       # - name: Configure FFmpeg for Windows
       #   if: matrix.platform.name == 'win-x64'
