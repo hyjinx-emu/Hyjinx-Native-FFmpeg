@@ -51,22 +51,31 @@ jobs:
       - name: Export versions
         shell: bash
         run: |
+          echo "GCC ==========================="
           which gcc
           gcc -v
           gcc -m64
+          echo "NASM =========================="
           which nasm
           nasm -v
+          echo "YASM =========================="
           which yasm
           yasm --version
+          echo "LD ============================"
           which ld
           ld --version
+          echo "AS ============================"
           which as
           as --version
+          echo "CLANG ========================="
           which clang
           clang --version
+          echo "UNAME ========================="
           uname --arch
+          echo "MAKE =========================="
           which make
           make --version
+          echo "PKG-CONFIG ===================="
           which pkg-config
           pkg-config --version
 
