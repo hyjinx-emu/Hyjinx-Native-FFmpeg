@@ -15,29 +15,9 @@ env:
   FFMPEG_VERSION: 5.1.1 # This needs to be updated to match the FFmpeg version being compiled.
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-
-    outputs:
-      version_number: ${{ steps.prepared.outputs.version_number }}
-      version_suffix: ${{ steps.prepared.outputs.version_suffix }}
-      full_version: ${{ steps.prepared.outputs.full_version }}
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        
-      - name: Prepare version
-        id: prepared
-        uses: ./.github/actions/prepare-version
-        with:
-          target_file: "Directory.Build.props"
-          explicit_version: ${{ github.event.release.tag_name }}
-
   build-ffmpeg:
     name: build (${{ matrix.platform.name }})
     runs-on: ${{ matrix.platform.runner }}
-    needs: prepare
 
     strategy:
       matrix:
