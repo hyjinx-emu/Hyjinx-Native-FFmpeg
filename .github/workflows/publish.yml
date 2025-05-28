@@ -12,7 +12,7 @@ permissions:
   pull-requests: write
 
 env:
-  FFMPEG_VERSION: 5.1.1 # This needs to be updated to match the FFmpeg version being compiled.
+  FFMPEG_VERSION: 5.1.10 # This needs to be updated to match the FFmpeg version being compiled.
   DECODERS: "h264,vp8"
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
       - name: Configure FFmpeg for Linux
         if: matrix.platform.name == 'linux-x64'
         env:
-          LDFLAGS: "-static-libgcc -static-libstdc++ -static"
+          LDFLAGS: "-static-libgcc -static-libstdc++"
         run: |
           ./configure \
             --arch=${{ matrix.platform.arch }} \
