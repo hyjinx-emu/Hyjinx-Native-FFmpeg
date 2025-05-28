@@ -103,8 +103,9 @@ jobs:
             --enable-avcodec \
             --enable-decoder=h264,vp8 \
             --disable-everything \
-            --enable-nasm \
+            --disable-asm \
             --disable-yasm \
+            --disable-nasm \
             --enable-stripping
 
       # - name: Configure FFmpeg for Linux
