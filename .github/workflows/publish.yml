@@ -88,6 +88,8 @@ jobs:
           echo $LDFLAGS
 
       - name: Configure FFmpeg for Windows
+        env:
+          PATH: /mingw64/bin:$PATH  # Ensure MinGW nasm is prioritized
         run: |
           ./configure \
             --prefix="$GITHUB_WORKSPACE/out" \
@@ -103,9 +105,6 @@ jobs:
             --enable-avcodec \
             --enable-decoder=h264,vp8 \
             --disable-everything \
-            --disable-asm \
-            --disable-yasm \
-            --disable-nasm \
             --enable-stripping
 
       # - name: Configure FFmpeg for Linux
