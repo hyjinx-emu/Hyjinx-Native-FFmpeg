@@ -1,0 +1,111 @@
+name: publish
+
+on:
+  push:
+    # branches:
+    #   - main
+  # release:
+  #   types: [ published ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  FFMPEG_VERSION: 5.1.1 # This needs to be updated to match the FFmpeg version being compiled.
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version_number: ${{ steps.prepared.outputs.version_number }}
+      version_suffix: ${{ steps.prepared.outputs.version_suffix }}
+      full_version: ${{ steps.prepared.outputs.full_version }}
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Prepare version
+        id: prepared
+        uses: ./.github/actions/prepare-version
+        with:
+          target_file: "Directory.Build.props"
+          explicit_version: ${{ github.event.release.tag_name }}
+
+  build-ffmpeg:
+    name: build (${{ matrix.platform.name }})
+    runs-on: ${{ matrix.platform.runner }}
+    needs: prepare
+
+    strategy:
+      matrix:
+        platform:
+          - { name: win-x64,   runner: ubuntu-latest, arch: x86_64, target-os: windows, cross-prefix: x86_64-w64-mingw32- }
+          - { name: linux-x64, runner: ubuntu-latest, arch: x86_64, target-os: linux }
+      fail-fast: false
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: FFmpeg/FFmpeg
+          ref: n${{ env.FFMPEG_VERSION }}
+
+      - name: Install dependencies (Linux)
+        if: matrix.platform.name == 'linux-x64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf automake build-essential cmake git libtool \
+            nasm pkg-config yasm zlib1g-dev libx264-dev
+
+      - name: Install dependencies (Windows cross-compile)
+        if: matrix.platform.name == 'win-x64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev
+
+      - name: Configure FFmpeg
+        if: matrix.platform.cross-prefix == ''
+        run: |
+          ./configure --prefix=$GITHUB_WORKSPACE/out \
+            --arch=${{ matrix.platform.arch }} \
+            --target-os=${{ matrix.platform.target-os }} \
+            --disable-debug \
+            --enable-static \
+            --disable-shared \
+            --disable-doc \
+            --disable-ffplay \
+            --enable-gpl \
+            --enable-libx264
+
+      - name: Configure FFmpeg (Cross compilation)
+        if: matrix.platform.cross-prefix != ''
+        run: |
+          ./configure --prefix=$GITHUB_WORKSPACE/out \
+            --arch=${{ matrix.platform.arch }} \
+            --target-os=${{ matrix.platform.target-os }} \
+            --cross-prefix=${{ matrix.platform.cross-prefix }} \
+            --disable-debug \
+            --enable-static \
+            --disable-shared \
+            --disable-doc \
+            --disable-ffplay \
+            --enable-gpl \
+            --enable-libx264      
+
+      - name: Build FFmpeg
+        shell: bash
+        run: make -j$(nproc)
+
+      - name: Install FFmpeg
+        shell: bash
+        run: make install
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "native-${{ matrix.platform.name }}"
+          path: "out/"
