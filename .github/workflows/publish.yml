@@ -48,13 +48,21 @@ jobs:
       #     sudo apt-get update
       #     sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev
 
+      - name: Export versions
+        shell: bash
+        run: |
+          which gcc
+          which nasm
+          which yasm
+
       - name: Configure FFmpeg for Linux
         if: matrix.platform.name == 'linux-x64'
         env:
           LDFLAGS: "-static-libgcc -static-libstdc++"
-        run: |
+        run: 
           ./configure \
             --arch=${{ matrix.platform.arch }} \
+            --cpu=generic \
             --target-os=${{ matrix.platform.target-os }} \
             --disable-everything \
             --disable-static \
