@@ -112,6 +112,7 @@ jobs:
             --enable-shared \
             --enable-decoder="${{ env.DECODERS }}" \
             --enable-stripping \
+            --enable-cross-compile \
             --prefix=$GITHUB_WORKSPACE/out
 
       # - name: Configure FFmpeg for Windows
