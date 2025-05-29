@@ -52,6 +52,11 @@ jobs:
         run: |
           sudo apt-get -y install \
             libx265-dev libnuma-dev libvpx-dev
+      
+      - name: Output pkg-config
+        shell: bash
+        run: |
+          pkg-config --list-all
 
       - name: Configure FFmpeg for Windows
         shell: bash
