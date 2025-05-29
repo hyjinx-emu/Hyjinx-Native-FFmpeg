@@ -51,7 +51,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get -y install \
-            libx265-dev libnuma-dev libvpx-dev
+            libx264-dev libx265-dev libnuma-dev libvpx-dev
       
       - name: Output pkg-config
         shell: bash
