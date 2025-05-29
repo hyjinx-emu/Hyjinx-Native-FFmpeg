@@ -55,6 +55,8 @@ jobs:
 
       - name: Configure FFmpeg for Windows
         shell: bash
+        env:
+          LDFLAGS: "-static-libgcc -static-libstdc++"
         run: |
           ./configure \
             --arch=${{ matrix.platform.arch }} \
