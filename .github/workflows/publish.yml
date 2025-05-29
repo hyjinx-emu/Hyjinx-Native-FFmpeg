@@ -24,7 +24,7 @@ jobs:
       matrix:
         platform:
           # - { name: win-x64,   runner: ubuntu-latest, arch: x86_64, target-os: mingw32, cross-prefix: x86_64-w64-mingw32- }
-          - { name: linux-x64, runner: ubuntu-latest, arch: x86_64, target-os: linux }
+          - { name: linux-x64, runner: ubuntu-latest, arch: x86_64 }
       fail-fast: false
       
     steps:
@@ -58,68 +58,37 @@ jobs:
         run: |
           pkg-config --list-all
 
-      - name: Configure FFmpeg for Windows
+      - name: Configure FFmpeg (Linux)
+        if: matrix.platform.name == 'linux-x64'
         shell: bash
         env:
           LDFLAGS: "-static-libgcc -static-libstdc++"
         run: |
           ./configure \
             --arch=${{ matrix.platform.arch }} \
+            --disable-everything \
+            --disable-programs \
+            --disable-doc \
+            --disable-avdevice \
+            --disable-avformat \
+            --disable-swresample \
+            --disable-swscale \
+            --disable-postproc \
+            --disable-network \
             --disable-debug \
+            --enable-avcodec \
+            --enable-avutil \
             --enable-gpl \
             --enable-libx264 \
             --enable-libvpx \
             --enable-shared \
+            --enable-decoder="${{ env.DECODERS }}" \
             --enable-cross-compile \
             --prefix=$GITHUB_WORKSPACE/out
 
-      # - name: Configure FFmpeg for Linux
-      #   if: matrix.platform.name == 'linux-x64'
-      #   env:
-      #     LDFLAGS: "-static-libgcc -static-libstdc++"
-      #   run: 
-      #     ./configure \
-      #       --arch=${{ matrix.platform.arch }} \
-      #       --disable-everything \
-      #       --disable-static \
-      #       --disable-doc \
-      #       --disable-programs \
-      #       --disable-swscale \
-      #       --disable-avformat \
-      #       --disable-swresample \
-      #       --disable-avdevice \
-      #       --disable-avfilter \
-      #       --disable-debug \
-      #       --enable-lto \
-      #       --enable-asm \
-      #       --enable-nasm \
-      #       --enable-avcodec \
-      #       --enable-shared \
-      #       --enable-decoder="${{ env.DECODERS }}" \
-      #       --enable-stripping \
-      #       --enable-cross-compile \
-      #       --prefix=$GITHUB_WORKSPACE/out
-
-      # - name: Configure FFmpeg for Windows
-      #   if: matrix.platform.name == 'win-x64'
-      #   run: |
-      #     ./configure \
-      #       --arch=${{ matrix.platform.arch }} \
-      #       --target-os=${{ matrix.platform.target-os }} \
-      #       --cross-prefix=${{ matrix.platform.cross-prefix }} \
-      #       --enable-cross-compile \
-      #       --disable-debug \
-      #       --enable-static \
-      #       --disable-shared \
-      #       --disable-doc \
-      #       --disable-ffplay \
-      #       --enable-gpl \
-      #       --enable-libx264 \
-      #       --prefix=$GITHUB_WORKSPACE/out \
-
       - name: Build FFmpeg
         shell: bash
-        run: make -j$(nproc) V=1
+        run: make -j$(nproc)
 
       - name: Install FFmpeg
         shell: bash
