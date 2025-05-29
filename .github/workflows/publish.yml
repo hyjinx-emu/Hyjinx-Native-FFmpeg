@@ -2,10 +2,8 @@ name: publish
 
 on:
   push:
-    # branches:
-    #   - main
-  # release:
-  #   types: [ published ]
+  release:
+    types: [ published ]
 
 permissions:
   contents: write
@@ -16,7 +14,27 @@ env:
   DECODERS: "h264,vp8"
 
 jobs:
-  build-ffmpeg:
+  prepare:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version_number: ${{ steps.set_version_number.outputs.version_number }}
+      version_suffix: ${{ steps.set_version_suffix.outputs.version_suffix }}
+      full_version: ${{ steps.set_version_number.outputs.version_number }}${{ steps.set_version_suffix.outputs.version_suffix != '' && '-' || '' }}${{ steps.set_version_suffix.outputs.version_suffix }}
+
+    steps:
+      - name: Set version number
+        id: set_version_number
+        shell: bash
+        run: echo "version_number=${{ env.FFMPEG_VERSION }}" >> $GITHUB_OUTPUT
+
+      - name: Set version suffix
+        if: github.event.action != 'published'
+        id: set_version_suffix
+        shell: bash
+        run: echo "version_suffix=preview.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+  build-native:
     name: build (${{ matrix.platform.name }})
     runs-on: ${{ matrix.platform.runner }}
 
