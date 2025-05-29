@@ -34,78 +34,37 @@ jobs:
           repository: FFmpeg/FFmpeg
           ref: n${{ env.FFMPEG_VERSION }}
 
-      - name: Install dependencies (Linux)
-        if: matrix.platform.name == 'linux-x64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            yasm build-essential clang llvm make automake \
-            autoconf pkg-config libtool-bin nasm
-
-      - name: Install dependencies (Windows)
-        if: matrix.platform.name == 'win-x64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y mingw-w64 pkg-config nasm yasm libx264-dev \
-            make automake autoconf libtool
-
-      - name: Export versions
+      - name: Install common dependencies
         shell: bash
         run: |
-          echo "GCC ==========================="
-          which gcc
-          gcc -v || true
-          gcc -m64 || true
-          echo "NASM =========================="
-          which nasm
-          nasm -v
-          echo "YASM =========================="
-          which yasm
-          yasm --version
-          echo "LD ============================"
-          which ld
-          ld --version
-          echo "AS ============================"
-          which as
-          as --version
-          echo "CLANG ========================="
-          which clang
-          clang --version
-          echo "UNAME ========================="
-          uname -a
-          echo "MAKE =========================="
-          which make
-          make --version
-          echo "PKG-CONFIG ===================="
-          which pkg-config
-          pkg-config --version
+          sudo apt-get update -qq
+          sudo apt-get -y install \
+            autoconf automake build-essential cmake git-core libass-dev \
+            libfreetype6-dev libgnutls28-dev libmp3lame-dev libsdl2-dev \
+            libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev \
+            libxcb-shm0-dev libxcb-xfixes0-dev meson ninja-build pkg-config \
+            texinfo wget yasm zlib1g-dev
+          sudo apt-get -y install \
+            libunistring-dev libaom-dev libdav1d-dev
 
-      - name: Echo environment variables
+      - name: Install custom dependencies
         shell: bash
         run: |
-          echo $CFLAGS
-          echo $CPPFLAGS
-          echo $LDFLAGS
+          sudo apt-get -y install \
+            libx265-dev libnuma-dev libvpx-dev
 
       - name: Configure FFmpeg for Windows
-        env:
-          PATH: /mingw64/bin:$PATH  # Ensure MinGW nasm is prioritized
+        shell: bash
         run: |
           ./configure \
-            --prefix="$GITHUB_WORKSPACE/out" \
-            --target-os=mingw32 \
-            --arch=x86_64 \
-            --cross-prefix=x86_64-w64-mingw32- \
-            --enable-cross-compile \
-            --disable-static \
-            --enable-shared \
+            --arch=${{ matrix.platform.arch }} \
             --disable-debug \
-            --disable-doc \
-            --disable-programs \
-            --enable-avcodec \
-            --enable-decoder=h264,vp8 \
-            --disable-everything \
-            --enable-stripping
+            --enable-gpl \
+            --enable-libx264 \
+            --enable-libvpx \
+            --enable-shared \
+            --enable-cross-compile \
+            --prefix=$GITHUB_WORKSPACE/out
 
       # - name: Configure FFmpeg for Linux
       #   if: matrix.platform.name == 'linux-x64'
