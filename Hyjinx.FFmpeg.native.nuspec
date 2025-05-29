@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
-    <id>Hyjinx.Graphics.Nvdec.Dependencies</id>
+    <id>Hyjinx.FFmpeg.native</id>
     <version>0.0.0</version>
     <description>This package contains native FFmpeg dependencies to be used by the Hyjinx emulator.</description>
     <authors>hyjinx-emu</authors>
