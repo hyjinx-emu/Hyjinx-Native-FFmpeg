@@ -37,6 +37,7 @@ jobs:
   build-native:
     name: build (${{ matrix.platform.name }})
     runs-on: ${{ matrix.platform.runner }}
+    needs: prepare
 
     strategy:
       matrix:
