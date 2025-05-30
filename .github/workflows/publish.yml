@@ -88,26 +88,24 @@ jobs:
         shell: bash
         working-directory: ffmpeg
         run: |
-          ./configure --help
-          
-      # --disable-everything \
-      # --disable-programs \
-      # --disable-doc \
-      # --disable-avdevice \
-      # --disable-avformat \
-      # --disable-swresample \
-      # --disable-swscale \
-      # --disable-postproc \
-      # --disable-network \
-      # --disable-debug \
-      # --enable-avcodec \
-      # --enable-avutil \
-      # --enable-gpl \
-      # --enable-libx264 \
-      # --enable-libvpx \
-      # --enable-shared \
-      # --enable-decoder="${{ env.DECODERS }}" \
-      # --prefix=$GITHUB_WORKSPACE/out
+          ./configure \
+            --disable-programs \
+            --disable-doc \
+            --disable-avdevice \
+            --disable-avformat \
+            --disable-swresample \
+            --disable-swscale \t
+            --disable-postproc \
+            --disable-network \
+            --disable-debug \
+            --enable-avcodec \
+            --enable-avutil \
+            --enable-gpl \
+            --enable-libx264 \
+            --enable-libvpx \
+            --enable-shared \
+            --enable-decoder="${{ env.DECODERS }}" \
+            --prefix=$GITHUB_WORKSPACE/out
 
       - name: Configure FFmpeg (Linux)
         if: matrix.platform.name == 'linux-x64'
