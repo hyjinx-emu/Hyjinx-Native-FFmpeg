@@ -86,7 +86,9 @@ jobs:
         shell: bash
         run: |
           pkg-config --list-all
-                
+
+      # --enable-libx264 \
+
       - name: Configure FFmpeg (Windows)
         if: matrix.platform.name == 'win-x64'
         shell: bash
@@ -110,7 +112,6 @@ jobs:
             --enable-avcodec \
             --enable-avutil \
             --enable-gpl \
-            --enable-libx264 \
             --enable-libvpx \
             --enable-shared \
             --enable-decoder=${{ env.DECODERS }} \
