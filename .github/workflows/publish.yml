@@ -129,11 +129,11 @@ jobs:
 
       - name: Create staging folder
         shell: bash
-        run: mkdir -p dist/${{ matrix.platform.name }}/native
+        run: mkdir -p dist/runtimes/${{ matrix.platform.name }}/native
 
       - name: Stage outputs
         shell: bash
-        run: scripts/stage-so-libs.sh "dist/${{ matrix.platform.name }}/native"
+        run: scripts/stage-so-libs.sh "dist/runtimes/${{ matrix.platform.name }}/native"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
