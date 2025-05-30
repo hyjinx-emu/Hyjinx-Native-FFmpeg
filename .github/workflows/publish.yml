@@ -94,7 +94,7 @@ jobs:
             --disable-avdevice \
             --disable-avformat \
             --disable-swresample \
-            --disable-swscale \t
+            --disable-swscale \
             --disable-postproc \
             --disable-network \
             --disable-debug \
