@@ -89,7 +89,6 @@ jobs:
         working-directory: ffmpeg
         run: 
           ./configure \
-            --arch=${{ matrix.platform.arch }} \
             --toolchain=msvc \
             --disable-everything \
             --disable-programs \
