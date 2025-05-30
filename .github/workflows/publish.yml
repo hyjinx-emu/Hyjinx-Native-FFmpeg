@@ -113,6 +113,13 @@ jobs:
         shell: bash
         run: make install
 
+      - name: Show working directory and scripts folder
+        shell: bash
+        run: |
+          pwd
+          ls -al
+          ls -al scripts
+
       - name: Create staging folder
         shell: bash
         run: mkdir -p dist/${{ matrix.platform.name }}/native
