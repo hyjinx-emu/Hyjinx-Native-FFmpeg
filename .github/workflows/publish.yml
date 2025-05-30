@@ -81,7 +81,12 @@ jobs:
         shell: bash
         run: |
           sudo apt-get install -y mingw-w64
-      
+
+      - name: Output pkg-config
+        shell: bash
+        run: |
+          pkg-config --list-all
+                
       - name: Configure FFmpeg (Windows)
         if: matrix.platform.name == 'win-x64'
         shell: bash
@@ -140,12 +145,12 @@ jobs:
             --enable-cross-compile \
             --prefix=$GITHUB_WORKSPACE/out
 
-      - name: Build FFmpeg (Linux)
+      - name: Build FFmpeg
         shell: bash
         working-directory: ffmpeg
         run: make -j$(nproc)
 
-      - name: Install FFmpeg (Linux)
+      - name: Install FFmpeg
         shell: bash
         working-directory: ffmpeg
         run: make install
