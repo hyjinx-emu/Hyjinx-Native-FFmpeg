@@ -89,7 +89,6 @@ jobs:
         working-directory: ffmpeg
         run: 
           ./configure \
-            --toolchain=msvc \
             --disable-everything \
             --disable-programs \
             --disable-doc \
