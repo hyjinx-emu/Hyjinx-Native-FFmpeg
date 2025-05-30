@@ -49,9 +49,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Checkout (FFmpeg)
+        uses: actions/checkout@v4
         with:
           repository: FFmpeg/FFmpeg
           ref: n${{ env.FFMPEG_VERSION }}
+          path: ffmpeg
 
       - name: Install common dependencies
         shell: bash
@@ -80,6 +84,7 @@ jobs:
       - name: Configure FFmpeg (Linux)
         if: matrix.platform.name == 'linux-x64'
         shell: bash
+        working-directory: ffmpeg
         env:
           LDFLAGS: "-static-libgcc -static-libstdc++"
         run: |
@@ -107,10 +112,12 @@ jobs:
 
       - name: Build FFmpeg
         shell: bash
+        working-directory: ffmpeg
         run: make -j$(nproc)
 
       - name: Install FFmpeg
         shell: bash
+        working-directory: ffmpeg
         run: make install
 
       - name: Show working directory and scripts folder
