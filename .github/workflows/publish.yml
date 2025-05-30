@@ -113,8 +113,16 @@ jobs:
         shell: bash
         run: make install
 
+      - name: Create staging folder
+        shell: bash
+        run: mkdir -p dist/${{ matrix.platform.name }}/native
+
+      - name: Stage outputs
+        shell: bash
+        run: scripts/stage-so-libs.sh "dist/${{ matrix.platform.name }}/native"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: "native-${{ matrix.platform.name }}"
-          path: "out/"
+          name: "native-${{ matrix.platform.name }}"  
+          path: "dist/"
