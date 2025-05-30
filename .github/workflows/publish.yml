@@ -89,7 +89,7 @@ jobs:
         run: |
           ./configure \
             --arch=${{ matrix.platform.arch }} \
-            --target-os=mingw32
+            --target-os=mingw32 \
             --cross-prefix=x86_64-w64-mingw32- \
             --enable-cross-compile \
             --disable-everything \
