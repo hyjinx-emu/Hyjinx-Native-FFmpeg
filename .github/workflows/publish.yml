@@ -57,19 +57,7 @@ jobs:
           ref: n${{ env.FFMPEG_VERSION }}
           path: ffmpeg
 
-      - name: Install NASM (Windows)
-        if: matrix.platform.name == 'win-x64'
-        shell: powershell
-        run: |
-          choco install nasm -y
-
-      - name: Set up MSVC environment (Windows)
-        if: matrix.platform.name == 'win-x64'
-        shell: cmd
-        run: call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" x64
-
-      - name: Install dependencies (Linux)
-        if: matrix.platform.name == 'linux-x64'
+      - name: Install dependencies
         shell: bash
         run: |
           sudo apt-get update -qq
@@ -82,36 +70,37 @@ jobs:
           sudo apt-get -y install \
             libunistring-dev libaom-dev libdav1d-dev
 
-      - name: Install custom dependencies (Linux)
-        if: matrix.platform.name == 'linux-x64'
+      - name: Install custom dependencies
         shell: bash
         run: |
           sudo apt-get -y install \
             libx264-dev libx265-dev libnuma-dev libvpx-dev
 
-      - name: Setup MSVC and build FFmpeg
+      - name: Configure FFmpeg (Windows)
         if: matrix.platform.name == 'win-x64'
         shell: bash
         working-directory: ffmpeg
         run: |
-          cmd.exe /c '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 && set' > msvc_env.txt
-          cat msvc_env.txt | grep -E '^(INCLUDE|LIB|LIBPATH|PATH|VSCMD_|VSINSTALLDIR|VCINSTALLDIR|VSAPPIDDIR|VSAPPIDNAME)' | sed 's/^\([^=]*\)=\(.*\)$/export \1="\2"/' > msvc_env.sh
-          source ./msvc_env.sh
-          nasm -v
-          ./configure --disable-programs --disable-doc --disable-avdevice --disable-avformat --disable-swresample --disable-swscale --disable-postproc --disable-network --disable-debug --enable-avcodec --enable-avutil --enable-gpl --enable-libvpx --enable-shared --enable-decoder=${{ env.DECODERS }} --prefix=$GITHUB_WORKSPACE/out
-          cmd.exe /c nmake
-
-      # - name: Build FFmpeg (Windows)
-      #   if: matrix.platform.name == 'win-x64'
-      #   shell: bash
-      #   working-directory: ffmpeg
-      #   run: nmake
-
-      - name: Install FFmpeg (Windows)
-        if: matrix.platform.name == 'win-x64'
-        shell: bash
-        working-directory: ffmpeg
-        run: nmake install
+          ./configure \
+            --target-os=mingw32 \
+            --arch=x86_64 \
+            --cross-prefix=x86_64-w64-mingw32- \
+            --enable-cross-compile \
+            --disable-everything \
+            --disable-programs \
+            --disable-doc \
+            --disable-avdevice \
+            --disable-avformat \
+            --disable-swresample \
+            --disable-swscale \
+            --disable-postproc \
+            --disable-network \
+            --disable-debug \
+            --enable-avcodec \
+            --enable-avutil \
+            --enable-shared \
+            --enable-decoder=${{ env.DECODERS }} \
+            --prefix=$GITHUB_WORKSPACE/out
 
       - name: Configure FFmpeg (Linux)
         if: matrix.platform.name == 'linux-x64'
@@ -139,14 +128,12 @@ jobs:
             --enable-cross-compile \
             --prefix=$GITHUB_WORKSPACE/out
 
-      - name: Build FFmpeg (Linux)
-        if: matrix.platform.name == 'linux-x64'
+      - name: Build
         shell: bash
         working-directory: ffmpeg
         run: make -j$(nproc)
 
-      - name: Install FFmpeg (Linux)
-        if: matrix.platform.name == 'linux-x64'
+      - name: Install
         shell: bash
         working-directory: ffmpeg
         run: make install
