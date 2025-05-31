@@ -57,12 +57,11 @@ jobs:
           ref: n${{ env.FFMPEG_VERSION }}
           path: ffmpeg
 
-      - name: Install NASM
+      - name: Install NASM (Windows)
         if: matrix.platform.name == 'win-x64'
         shell: powershell
         run: |
           choco install nasm -y
-          nasm -v
 
       - name: Set up MSVC environment (Windows)
         if: matrix.platform.name == 'win-x64'
