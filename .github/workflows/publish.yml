@@ -70,12 +70,6 @@ jobs:
           sudo apt-get -y install \
             libunistring-dev libaom-dev libdav1d-dev
 
-      - name: Install custom dependencies
-        shell: bash
-        run: |
-          sudo apt-get -y install \
-            libx264-dev libx265-dev libnuma-dev libvpx-dev
-
       - name: Install mingw32 (Windows)
         if: matrix.platform.name == 'win-x64'
         shell: bash
