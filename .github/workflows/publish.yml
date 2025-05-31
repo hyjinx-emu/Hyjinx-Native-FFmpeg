@@ -1,0 +1,246 @@
+name: publish
+
+on:
+  push:
+    branches-ignore: [ main ]
+  release:
+    types: [ published ]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  FFMPEG_VERSION: 5.1.4 # This needs to be updated to match the FFmpeg version being compiled.
+  DECODERS: "h264,vp8"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version_number: ${{ steps.set_version_number.outputs.version_number }}
+      version_suffix: ${{ steps.set_version_suffix.outputs.version_suffix }}
+      full_version: ${{ steps.set_version_number.outputs.version_number }}${{ steps.set_version_suffix.outputs.version_suffix != '' && '-' || '' }}${{ steps.set_version_suffix.outputs.version_suffix }}
+
+    steps:
+      - name: Set version number
+        id: set_version_number
+        shell: bash
+        run: echo "version_number=${{ env.FFMPEG_VERSION }}" >> $GITHUB_OUTPUT
+
+      - name: Set version suffix
+        if: github.event.action != 'published'
+        id: set_version_suffix
+        shell: bash
+        run: echo "version_suffix=preview.${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+  build-native:
+    name: build (${{ matrix.platform.name }})
+    runs-on: ${{ matrix.platform.runner }}
+    needs: prepare
+
+    strategy:
+      matrix:
+        platform:
+          - { name: win-x64,    runner: ubuntu-latest,  arch: x86_64 }
+          - { name: linux-x64,  runner: ubuntu-latest,   arch: x86_64 }
+      fail-fast: false
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout (FFmpeg)
+        uses: actions/checkout@v4
+        with:
+          repository: FFmpeg/FFmpeg
+          ref: n${{ env.FFMPEG_VERSION }}
+          path: ffmpeg
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get -y install \
+            autoconf automake build-essential cmake git-core libass-dev \
+            libfreetype6-dev libgnutls28-dev libmp3lame-dev libsdl2-dev \
+            libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev \
+            libxcb-shm0-dev libxcb-xfixes0-dev meson ninja-build pkg-config \
+            texinfo wget yasm zlib1g-dev
+          sudo apt-get -y install \
+            libunistring-dev libaom-dev libdav1d-dev
+
+      - name: Install mingw32 (Windows)
+        if: matrix.platform.name == 'win-x64'
+        shell: bash
+        run: |
+          sudo apt-get -y install \
+            mingw-w64 gcc-mingw-w64 g++-mingw-w64
+
+      - name: Configure FFmpeg (Windows)
+        if: matrix.platform.name == 'win-x64'
+        shell: bash
+        working-directory: ffmpeg
+        run: |
+          ./configure \
+            --target-os=mingw32 \
+            --arch=x86_64 \
+            --cross-prefix=x86_64-w64-mingw32- \
+            --enable-cross-compile \
+            --disable-everything \
+            --disable-programs \
+            --disable-doc \
+            --disable-avdevice \
+            --disable-avformat \
+            --disable-swresample \
+            --disable-swscale \
+            --disable-postproc \
+            --disable-network \
+            --disable-debug \
+            --enable-avcodec \
+            --enable-avutil \
+            --enable-shared \
+            --enable-decoder=${{ env.DECODERS }} \
+            --prefix=$GITHUB_WORKSPACE/out
+
+      - name: Configure FFmpeg (Linux)
+        if: matrix.platform.name == 'linux-x64'
+        shell: bash
+        working-directory: ffmpeg
+        env:
+          LDFLAGS: "-static-libgcc -static-libstdc++"
+        run: |
+          ./configure \
+            --arch=${{ matrix.platform.arch }} \
+            --disable-everything \
+            --disable-programs \
+            --disable-doc \
+            --disable-avdevice \
+            --disable-avformat \
+            --disable-swresample \
+            --disable-swscale \
+            --disable-postproc \
+            --disable-network \
+            --disable-debug \
+            --enable-avcodec \
+            --enable-avutil \
+            --enable-shared \
+            --enable-decoder=${{ env.DECODERS }} \
+            --enable-cross-compile \
+            --prefix=$GITHUB_WORKSPACE/out
+
+      - name: Build
+        shell: bash
+        working-directory: ffmpeg
+        run: make -j$(nproc)
+
+      - name: Install
+        shell: bash
+        working-directory: ffmpeg
+        run: make install
+
+      - name: Create staging folder
+        shell: bash
+        run: mkdir -p dist/runtimes/${{ matrix.platform.name }}/native
+
+      - name: Stage outputs (Windows)
+        if: matrix.platform.name == 'win-x64'
+        shell: bash
+        run: cp out/bin/*.dll "dist/runtimes/${{ matrix.platform.name }}/native"
+        
+      - name: Stage outputs (Linux)
+        if: matrix.platform.name == 'linux-x64'
+        shell: bash
+        run: scripts/stage-so-libs.sh "dist/runtimes/${{ matrix.platform.name }}/native"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: "native-${{ matrix.platform.name }}"  
+          path: "dist/"
+
+  package:
+    runs-on: windows-latest
+    needs: [ prepare, build-native ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Set up NuGet
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-api-key: ${{ secrets.NUGET_TOKEN }}
+          nuget-version: latest
+
+      - name: Package preview
+        if: github.event.action != 'published'
+        shell: pwsh
+        run: nuget pack Hyjinx.FFmpeg.native.nuspec -OutputDirectory ./out -Version "${{ needs.prepare.outputs.version_number }}" -Suffix "${{ needs.prepare.outputs.version_suffix }}"
+
+      - name: Package release
+        if: github.event.action == 'published'
+        shell: pwsh
+        run: nuget pack Hyjinx.FFmpeg.native.nuspec -OutputDirectory ./out -Version "${{ needs.prepare.outputs.version_number }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: ./out/*.nupkg
+
+  publish:
+    runs-on: windows-latest
+    needs: package
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: dist/
+
+      - name: Set up NuGet
+        uses: nuget/setup-nuget@v2
+        with:
+          nuget-api-key: ${{ secrets.NUGET_TOKEN }}
+          nuget-version: latest
+
+      - name: Push package(s)
+        shell: powershell
+        run: |
+          Get-ChildItem -Path "dist" -Filter *.nupkg | ForEach-Object {
+            Write-Host "Pushing $($_.FullName)"
+            nuget push $_.FullName -Source https://api.nuget.org/v3/index.json
+          }
+
+  post-publish:
+    runs-on: ubuntu-latest
+    needs: [ prepare, publish ]
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: dist/
+          
+      - name: Publish
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ needs.prepare.outputs.full_version }}
+          artifacts: "dist/*.*"
+          prerelease: ${{ github.event.action != 'published' }}
+          generateReleaseNotes: ${{ github.event.action != 'published' }}
+          allowUpdates: true
+          omitBodyDuringUpdate: true
