@@ -76,6 +76,13 @@ jobs:
           sudo apt-get -y install \
             libx264-dev libx265-dev libnuma-dev libvpx-dev
 
+      - name: Install mingw32 (Windows)
+        if: matrix.platform.name == 'win-x64'
+        shell: bash
+        run: |
+          sudo apt-get -y install \
+            mingw-w64 gcc-mingw-w64 g++-mingw-w64
+
       - name: Configure FFmpeg (Windows)
         if: matrix.platform.name == 'win-x64'
         shell: bash
