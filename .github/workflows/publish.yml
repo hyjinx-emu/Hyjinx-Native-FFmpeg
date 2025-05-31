@@ -149,6 +149,11 @@ jobs:
         shell: bash
         run: mkdir -p dist/runtimes/${{ matrix.platform.name }}/native
 
+      - name: Stage outputs (Windows)
+        if: matrix.platform.name == 'win-x64'
+        shell: bash
+        run: cp out/bin/*.dll "dist/runtimes/${{ matrix.platform.name }}/native"
+        
       - name: Stage outputs (Linux)
         if: matrix.platform.name == 'linux-x64'
         shell: bash
@@ -158,7 +163,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: "native-${{ matrix.platform.name }}"  
-          path: "out/"
+          path: "dist/"
 
   package:
     runs-on: windows-latest
