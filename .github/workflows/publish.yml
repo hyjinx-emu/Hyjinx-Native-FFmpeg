@@ -3,6 +3,8 @@ name: publish
 on:
   push:
     branches-ignore: [ main ]
+    paths:
+      - '.github/workflows/publish.yml'
   release:
     types: [ published ]
 
@@ -11,7 +13,7 @@ permissions:
   pull-requests: write
 
 env:
-  FFMPEG_VERSION: 5.1.4 # This needs to be updated to match the FFmpeg version being compiled.
+  FFMPEG_VERSION: 5.1.5 # This needs to be updated to match the FFmpeg version being compiled.
   DECODERS: "h264,vp8"
 
 jobs:
