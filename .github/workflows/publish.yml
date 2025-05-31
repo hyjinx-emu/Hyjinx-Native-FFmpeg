@@ -97,7 +97,7 @@ jobs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           set PATH=C:\Program Files\NASM;%PATH%
           nasm -v
-          ./configure --disable-programs --disable-doc --disable-avdevice --disable-avformat --disable-swresample --disable-swscale --disable-postproc --disable-network --disable-debug --enable-avcodec --enable-avutil --enable-gpl --enable-libvpx --enable-shared --enable-decoder=${{ env.DECODERS }} --prefix=$GITHUB_WORKSPACE/out
+          configure --disable-programs --disable-doc --disable-avdevice --disable-avformat --disable-swresample --disable-swscale --disable-postproc --disable-network --disable-debug --enable-avcodec --enable-avutil --enable-gpl --enable-libvpx --enable-shared --enable-decoder=${{ env.DECODERS }} --prefix=$GITHUB_WORKSPACE/out
           nmake
 
       # - name: Build FFmpeg (Windows)
