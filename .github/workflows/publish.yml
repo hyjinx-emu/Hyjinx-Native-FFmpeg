@@ -162,7 +162,6 @@ jobs:
   package:
     runs-on: windows-latest
     needs: [ prepare, build-native ]
-    if: true == false
 
     steps:
       - name: Checkout repository
