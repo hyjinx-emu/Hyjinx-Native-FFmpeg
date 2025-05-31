@@ -134,9 +134,6 @@ jobs:
             --disable-debug \
             --enable-avcodec \
             --enable-avutil \
-            --enable-gpl \
-            --enable-libx264 \
-            --enable-libvpx \
             --enable-shared \
             --enable-decoder=${{ env.DECODERS }} \
             --enable-cross-compile \
