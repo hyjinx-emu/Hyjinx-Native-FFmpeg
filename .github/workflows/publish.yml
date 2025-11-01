@@ -157,7 +157,7 @@ jobs:
         run: scripts/stage-so-libs.sh "dist/runtimes/${{ matrix.platform.name }}/native"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: "native-${{ matrix.platform.name }}"  
           path: "dist/"
@@ -193,7 +193,7 @@ jobs:
         run: nuget pack Hyjinx.FFmpeg.native.nuspec -OutputDirectory ./out -Version "${{ needs.prepare.outputs.version_number }}"
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nupkg
           path: ./out/*.nupkg
